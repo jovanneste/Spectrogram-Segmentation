@@ -1,4 +1,5 @@
 import csv
+import math
 import pandas as pd
 import librosa
 import matplotlib.pyplot as plt
@@ -33,21 +34,32 @@ def clean(input_file, output_file):
 
 #clean('data/labels/whi.txt', 'data/labels/whi.csv')
 
+def normalise_coords(row,x1):
+    return (row['x1']-x1, row['x2']-x1, row['y1'], row['y2'])
 
 
 def save_spectrogram(audio_file, row):
     print("Row", row)
     y, sr = librosa.load(audio_file, sr=None)
-    x1, x2 = row['x1'], row['x2']
+    x1 = math.floor(row['x1'])
+    x2=x1+1
+   
     start = int(x1*sr)
     end = int(x2*sr)
+
     segment = y[start:end]
+    
+    S = librosa.feature.melspectrogram(y=segment, sr=sr)
+    S_dB = librosa.power_to_db(np.abs(S), ref=np.max)
+    
     D = librosa.stft(segment)
     spectrogram = librosa.amplitude_to_db(np.abs(D), ref=np.max)
     librosa.display.specshow(spectrogram, sr=sr, x_axis='time', y_axis='log')
+    
     plt.colorbar(format='%+2.0f dB')
-    plt.title(x2-x1)
+    plt.title(normalise_coords(row, x1))
     plt.show()
+    sys.exit
     #plt.savefig("data/spectrogram_{row.name}.png")
     #plt.close()
 
