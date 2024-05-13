@@ -65,7 +65,7 @@ def coords_2_yolo(bbox):
     center_y = (bbox[2]+bbox[3])/2
     w = bbox[1]-bbox[0]
     h = bbox[3]-bbox[2]
-    return center_x, center_y, w, h
+    return round(center_x,2), round(center_y,2), round(w,2), round(h,2)
 
 def normalise_coords(row,x1,sr,S_dB):
     height = S_dB.shape[0]
@@ -89,7 +89,7 @@ def normalise_coords(row,x1,sr,S_dB):
     return (round(row['x1']-x1,2),round(x2,2), round(y1_bin_index/height, 2), round(y2_bin_index/height, 2))
 
 
-def save_spectrogram(audio_file, row, labels, idx): 
+def save_spectrogram(audio_file, row, idx): 
     print(row)
     y, sr = librosa.load(audio_file, sr=None)
     x1 = math.floor(row['x1'])
@@ -105,24 +105,22 @@ def save_spectrogram(audio_file, row, labels, idx):
     librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')   
     plt.colorbar(format='%+2.0f dB')
     plt.show()
-    bbox = normalise_coords(row, x1, sr, S_dB)
-    print(S_dB.shape[1])
-    print(bbox)
-    sys.exit()
+    x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, S_dB))
     
     plt.savefig(f"data/spectrograms/{idx}.png")
+    with open(f'data/spectrograms/{idx}.txt', 'w') as f:
+        f.write(f"0 {x} {y} {w} {h}")
+
+
     plt.close()
 
 
 def process_audio(csv_file, audio_file):
     df = pd.read_csv(csv_file)
-    labels = []
     for idx, row in df.iterrows():
         print("ID", idx)
-        save_spectrogram(audio_file, row, labels, idx)
-    with open('data/spectrograms/labels.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerows(labels)
+        save_spectrogram(audio_file, row, idx)
+
    
 
 

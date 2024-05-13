@@ -1,0 +1,4 @@
+train: data/spectrograms/
+
+nc=1
+names=['Whistle']
