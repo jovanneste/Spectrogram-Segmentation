@@ -1,2 +1,3 @@
 data/*
 yolov7/*
+*.pt
