@@ -1,10 +1,37 @@
 import csv
 import math
 import pandas as pd
+from scipy.io import wavfile
+from scipy import signal
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+
+def display(f):
+    sample_rate, samples = wavfile.read(f)
+    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+    
+    plt.figure(figsize=(0, 5))
+    plt.subplot(1, 2, 1)
+    plt.pcolormesh(times, frequencies, np.log(spectrogram))
+    plt.ylabel('Frequency [Hz]')
+    plt.xlabel('Time [sec]')
+    plt.title('Full Spectrogram')
+    
+    plt.subplot(1, 2, 2)
+    
+    n = 5
+    # Find the index of the time point closest to the nth second
+    index_ns = np.argmin(np.abs(times - n))
+    plt.pcolormesh(times[:index_ns+1], frequencies, np.log(spectrogram[:, :index_ns+1]))
+    plt.ylabel('Frequency [Hz]')
+    plt.xlabel('Time [sec]')
+    plt.title(f'Spectrogram of {n}th Second')
+    
+    plt.tight_layout()
+    plt.show()
+
 
 def clean(input_file, output_file):
     # Open input and output files
@@ -33,10 +60,14 @@ def clean(input_file, output_file):
             if class_label == 'whistle':  # Process only lines with 'whistle' class
                 writer.writerow(['whistle', x1, x2, y1, y2])
 
-#clean('data/labels/whi.txt', 'data/labels/whi.csv')
 
 def normalise_coords(row,x1):
-    return (row['x1']-x1, row['x2']-x1, row['y1'], row['y2'])
+    x2 = row['x2']-x1
+    if x2>1:
+        x2=1   
+    y1, y2 = row['y1'], row['y2']
+
+    return (round(row['x1']-x1,2),round(x2,2), row['y1'], row['y2'])
 
 
 def save_spectrogram(audio_file, row):
@@ -49,17 +80,17 @@ def save_spectrogram(audio_file, row):
     end = int(x2*sr)
 
     segment = y[start:end]
-    S = librosa.feature.melspectrogram(y=segment, sr=sr)
-    S_dB = librosa.power_to_db(np.abs(S), ref=np.max)
+    S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=128)
+    S_dB = librosa.power_to_db(S, ref=np.max)
     
     D = librosa.stft(segment)
     spectrogram = librosa.amplitude_to_db(np.abs(D), ref=np.max)
-    librosa.display.specshow(spectrogram, sr=sr, x_axis='time', y_axis='log')
+    librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')
     
     plt.colorbar(format='%+2.0f dB')
     plt.title(normalise_coords(row, x1))
     plt.show()
-    sys.exit
+    
     #plt.savefig("data/spectrogram_{row.name}.png")
     #plt.close()
 
@@ -71,5 +102,5 @@ def process_audio(csv_file, audio_file):
         save_spectrogram(audio_file, row)
         
         
-        
-process_audio('data/labels/whi.csv', 'data/raw_data/whi.wav')
+#clean('data/labels/whi2.txt', 'data/labels/whi2.csv')
+process_audio('data/labels/whi2.csv', 'data/raw_data/whi2.wav')
