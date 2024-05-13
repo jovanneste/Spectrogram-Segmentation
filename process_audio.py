@@ -61,11 +61,27 @@ def clean(input_file, output_file):
                 writer.writerow(['whistle', x1, x2, y1, y2])
 
 
-def normalise_coords(row,x1):
+def normalise_coords(row,x1,sr,S_dB):
     x2 = row['x2']-x1
     if x2>1:
         x2=1   
     y1, y2 = row['y1'], row['y2']
+    
+    mel_frequencies = librosa.core.mel_frequencies(n_mels=60, fmin=0.0, fmax=sr/2)
+
+    # Find the index of the frequency bin corresponding to y1
+    for i, freq in enumerate(mel_frequencies):
+        if freq > y1:
+            y1_bin_index = i
+            break
+    for i, freq in enumerate(mel_frequencies):
+        if freq > y2:
+            y2_bin_index = i
+            break
+    
+    # Now you have the index of the frequency bin corresponding to y1
+    print("Frequency bin index for y1:", y1_bin_index/S_dB.shape[0])
+    print("Frequency bin index for y2:", y2_bin_index/S_dB.shape[0])
 
     return (round(row['x1']-x1,2),round(x2,2), row['y1'], row['y2'])
 
@@ -80,19 +96,20 @@ def save_spectrogram(audio_file, row):
     end = int(x2*sr)
 
     segment = y[start:end]
-    S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=128)
+    S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=60)
     S_dB = librosa.power_to_db(S, ref=np.max)
-    
-    D = librosa.stft(segment)
-    spectrogram = librosa.amplitude_to_db(np.abs(D), ref=np.max)
     librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')
     
-    plt.colorbar(format='%+2.0f dB')
-    plt.title(normalise_coords(row, x1))
-    plt.show()
+
     
-    #plt.savefig("data/spectrogram_{row.name}.png")
-    #plt.close()
+    
+    plt.colorbar(format='%+2.0f dB')
+    plt.title(normalise_coords(row, x1, sr, S_dB))
+    plt.show()
+    sys.exit()
+    
+    plt.savefig("data/spectrograms/{row.name}.png")
+    plt.close()
 
 
 def process_audio(csv_file, audio_file):
