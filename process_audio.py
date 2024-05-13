@@ -60,8 +60,15 @@ def clean(input_file, output_file):
             if class_label == 'whistle':  # Process only lines with 'whistle' class
                 writer.writerow(['whistle', x1, x2, y1, y2])
 
+def coords_2_yolo(bbox):
+    center_x = (bbox[0]+bbox[1])/2
+    center_y = (bbox[2]+bbox[3])/2
+    w = bbox[1]-bbox[0]
+    h = bbox[3]-bbox[2]
+    return center_x, center_y, w, h
 
 def normalise_coords(row,x1,sr,S_dB):
+    height = S_dB.shape[0]
     x2 = row['x2']-x1
     if x2>1:
         x2=1   
@@ -78,16 +85,12 @@ def normalise_coords(row,x1,sr,S_dB):
         if freq > y2:
             y2_bin_index = i
             break
-    
-    # Now you have the index of the frequency bin corresponding to y1
-    print("Frequency bin index for y1:", y1_bin_index/S_dB.shape[0])
-    print("Frequency bin index for y2:", y2_bin_index/S_dB.shape[0])
 
-    return (round(row['x1']-x1,2),round(x2,2), row['y1'], row['y2'])
+    return (round(row['x1']-x1,2),round(x2,2), round(y1_bin_index/height, 2), round(y2_bin_index/height, 2))
 
 
-def save_spectrogram(audio_file, row):
-    print("Row", row)
+def save_spectrogram(audio_file, row, labels, idx): 
+    print(row)
     y, sr = librosa.load(audio_file, sr=None)
     x1 = math.floor(row['x1'])
     x2=x1+1
@@ -98,26 +101,31 @@ def save_spectrogram(audio_file, row):
     segment = y[start:end]
     S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=60)
     S_dB = librosa.power_to_db(S, ref=np.max)
-    librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')
     
-
-    
-    
+    librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')   
     plt.colorbar(format='%+2.0f dB')
-    plt.title(normalise_coords(row, x1, sr, S_dB))
     plt.show()
+    bbox = normalise_coords(row, x1, sr, S_dB)
+    print(S_dB.shape[1])
+    print(bbox)
     sys.exit()
     
-    plt.savefig("data/spectrograms/{row.name}.png")
+    plt.savefig(f"data/spectrograms/{idx}.png")
     plt.close()
 
 
 def process_audio(csv_file, audio_file):
     df = pd.read_csv(csv_file)
-    
+    labels = []
     for idx, row in df.iterrows():
-        save_spectrogram(audio_file, row)
-        
-        
+        print("ID", idx)
+        save_spectrogram(audio_file, row, labels, idx)
+    with open('data/spectrograms/labels.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(labels)
+   
+
+
+   
 #clean('data/labels/whi2.txt', 'data/labels/whi2.csv')
-process_audio('data/labels/whi2.csv', 'data/raw_data/whi2.wav')
+process_audio('data/labels/whi.csv', 'data/raw_data/whi.wav')
