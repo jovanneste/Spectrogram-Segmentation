@@ -1,4 +1,4 @@
-train: data/spectrograms/
+train: ~/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/spectrograms/
 
 nc=1
 names=['Whistle']

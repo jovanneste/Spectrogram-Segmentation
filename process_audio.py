@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
+import random
+import shutil
 
 def display(f):
     sample_rate, samples = wavfile.read(f)
@@ -123,6 +125,25 @@ def save_spectrogram(audio_file, row, idx):
     plt.close()
 
 
+def split_data():
+    d = 'data/spectrograms/'
+    files = [f for f in os.listdir(d) if f.endswith('.png')]
+    split = int(len(files)*0.75)
+    random.shuffle(files)
+    train_split, test_split = files[:split], files[split:]
+    
+    for f in train_split:
+        txt_file = os.path.splitext(f)[0] + '.txt'
+        shutil.move(d+f, d+'train/'+f)
+        shutil.move(d+txt_file, d+'train/'+txt_file)
+  
+    for f in test_split:
+        txt_file = os.path.splitext(f)[0] + '.txt'
+        shutil.move(d+f, d+'test/'+f)
+        shutil.move(d+txt_file, d+'test/'+txt_file)
+    
+    
+    
 def process_audio(f):
     print("NEW FILE -- ", f)
     audio_file = ('/mnt/Data1/Acoustics/raw_data/REPMUS_2023/SoundTrap_data_wav/'+f)[:-3]+'wav'
@@ -134,17 +155,16 @@ def process_audio(f):
 
 
 if __name__=='__main__':
-    file_list = [
-    "5927.230919235004.txt",
-    "5927.230909074958.txt",
-    "5927.230909092958.txt",
-    "5927.230914020001.txt",
-    "6335.230909124958.txt",
-    "6335.230909091958.txt"
-   ]
+   
+    #file_list = [
+    #"5927.230919235004.txt",
+    #"5927.230909092958.txt",
+    #"6335.230909124958.txt",
+    #"6335.230909091958.txt"
+   #]
 
-    [clean(l) for l in file_list]
-    [process_audio(f) for f in file_list]
-    
+    #[clean(l) for l in file_list]
+    #[process_audio(f) for f in file_list]
+    split_data()
 
     
