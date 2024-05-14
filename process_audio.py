@@ -93,7 +93,14 @@ def normalise_coords(row,x1,sr,S_dB):
 
 
 def save_spectrogram(audio_file, row, idx): 
-    print(row)
+    directory = 'data/spectrograms/'
+    txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
+
+    if not txt_files:
+        save_as = 1
+    else:
+        save_as = max([int(filename.split('.')[0]) for filename in txt_files])+1
+    print("Creating " + str(save_as))
     y, sr = librosa.load(audio_file, sr=None)
     x1 = math.floor(row['x1'])
     x2=x1+1
@@ -110,38 +117,33 @@ def save_spectrogram(audio_file, row, idx):
     plt.show()
     x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, S_dB))
     
-    plt.savefig(f"data/spectrograms/{idx}.png")
-    with open(f'data/spectrograms/{idx}.txt', 'w') as f:
+    plt.savefig(f"data/spectrograms/{save_as}.png")
+    with open(f'data/spectrograms/{save_as}.txt', 'w') as f:
         f.write(f"0 {x} {y} {w} {h}")
     plt.close()
 
 
 def process_audio(f):
-    audio_file = '/mnt/Data1/Acoustics/raw_data/REPMUS_2023/SoundTrap_data_wav/'+f
+    print("NEW FILE -- ", f)
+    audio_file = ('/mnt/Data1/Acoustics/raw_data/REPMUS_2023/SoundTrap_data_wav/'+f)[:-3]+'wav'
     csv_file = '/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/labels/'+f
     df = pd.read_csv(csv_file)
     for idx, row in df.iterrows():
-        print("ID", idx)
         save_spectrogram(audio_file, row, idx)
 
 
-   
-#clean('data/labels/whi2.txt', 'data/labels/whi2.csv')
-#process_audio('data/labels/whi.csv', 'data/raw_data/whi.wav')
+
 if __name__=='__main__':
     file_list = [
-    "5927.230919235004.txt"
-   # "5927.230909074958.txt",
-   # "5927.230909092958.txt",
-   # "5927.230914020001.txt",
-   # "6335.230909124958.txt",
-   # "6335.230909091958.txt"
+    "5927.230919235004.txt",
+    "5927.230909074958.txt",
+    "5927.230909092958.txt",
+    "5927.230914020001.txt",
+    "6335.230909124958.txt",
+    "6335.230909091958.txt"
    ]
 
-    
-    
     [clean(l) for l in file_list]
-    
     [process_audio(f) for f in file_list]
     
 
