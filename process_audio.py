@@ -6,6 +6,7 @@ from scipy import signal
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import sys
 
 def display(f):
@@ -33,9 +34,11 @@ def display(f):
     plt.show()
 
 
-def clean(input_file, output_file):
-    # Open input and output files
-    with open(input_file, 'r') as infile, open(output_file, 'w', newline='') as outfile:
+def clean(l):
+    labels_path = '/mnt/Data1/Acoustics/labels/REPMUS_2023/'+l
+    output_file = '/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/labels/'+l
+
+    with open(labels_path, 'r') as infile, open(output_file, 'w', newline='') as outfile:
         reader = infile.readlines()
         writer = csv.writer(outfile)
 
@@ -110,20 +113,36 @@ def save_spectrogram(audio_file, row, idx):
     plt.savefig(f"data/spectrograms/{idx}.png")
     with open(f'data/spectrograms/{idx}.txt', 'w') as f:
         f.write(f"0 {x} {y} {w} {h}")
-
-
     plt.close()
 
 
-def process_audio(csv_file, audio_file):
+def process_audio(f):
+    audio_file = '/mnt/Data1/Acoustics/raw_data/REPMUS_2023/SoundTrap_data_wav/'+f
+    csv_file = '/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/labels/'+f
     df = pd.read_csv(csv_file)
     for idx, row in df.iterrows():
         print("ID", idx)
         save_spectrogram(audio_file, row, idx)
 
-   
-
 
    
 #clean('data/labels/whi2.txt', 'data/labels/whi2.csv')
-process_audio('data/labels/whi.csv', 'data/raw_data/whi.wav')
+#process_audio('data/labels/whi.csv', 'data/raw_data/whi.wav')
+if __name__=='__main__':
+    file_list = [
+    "5927.230919235004.txt"
+   # "5927.230909074958.txt",
+   # "5927.230909092958.txt",
+   # "5927.230914020001.txt",
+   # "6335.230909124958.txt",
+   # "6335.230909091958.txt"
+   ]
+
+    
+    
+    [clean(l) for l in file_list]
+    
+    [process_audio(f) for f in file_list]
+    
+
+    
