@@ -5,6 +5,7 @@ from scipy.io import wavfile
 from scipy import signal
 import librosa
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 import numpy as np
 import os
 import sys
@@ -66,33 +67,26 @@ def clean(l):
                 writer.writerow(['whistle', x1, x2, y1, y2])
 
 def coords_2_yolo(bbox):
+    print('yolo')
+    print(bbox)
     center_x = (bbox[0]+bbox[1])/2
     center_y = (bbox[2]+bbox[3])/2
     w = bbox[1]-bbox[0]
     h = bbox[3]-bbox[2]
+    print(center_x, center_y, w, h)
     return round(center_x,2), round(center_y,2), round(w,2), round(h,2)
 
 def normalise_coords(row,x1,sr,S_dB):
-    height = S_dB.shape[0]
     x2 = row['x2']-x1
     if x2>1:
         x2=1   
     y1, y2 = row['y1'], row['y2']
     
-    mel_frequencies = librosa.core.mel_frequencies(n_mels=60, fmin=0.0, fmax=sr/2)
-
-    # Find the index of the frequency bin corresponding to y1
-    for i, freq in enumerate(mel_frequencies):
-        if freq > y1:
-            y1_bin_index = i
-            break
-    for i, freq in enumerate(mel_frequencies):
-        if freq > y2:
-            y2_bin_index = i
-            break
-
-    return (round(row['x1']-x1,2),round(x2,2), round(y1_bin_index/height, 2), round(y2_bin_index/height, 2))
-
+    mel_frequencies = librosa.core.mel_frequencies(n_mels=60, fmin=0.0, fmax=sr/2)    
+    y1_bin_index = np.argmin(np.abs(mel_frequencies - y1))
+    y2_bin_index = np.argmin(np.abs(mel_frequencies - y2))
+    
+    return (round(row['x1']-x1,2),round(x2,2), round(y1_bin_index/60, 2), round(y2_bin_index/60, 2))
 
 def save_spectrogram(audio_file, row, idx): 
     directory = 'data/spectrograms/'
@@ -113,18 +107,20 @@ def save_spectrogram(audio_file, row, idx):
     segment = y[start:end]
     S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=60)
     S_dB = librosa.power_to_db(S, ref=np.max)
-    
+    print(S_dB.shape)
     librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')   
-    plt.colorbar(format='%+2.0f dB')
-    plt.show()
+    #$plt.colorbar(format='%+2.0f dB')
+    plt.axis('off')
+    print(normalise_coords(row, x1, sr, S_dB))
     x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, S_dB))
+    plt.plot()
     
-    plt.savefig(f"data/spectrograms/{save_as}.png")
+    plt.savefig(f"data/spectrograms/{save_as}.png", bbox_inches = 'tight', pad_inches=0)
     with open(f'data/spectrograms/{save_as}.txt', 'w') as f:
         f.write(f"0 {x} {y} {w} {h}")
-    plt.close()
 
-
+    sys.exit()
+    
 def split_data():
     d = 'data/spectrograms/'
     files = [f for f in os.listdir(d) if f.endswith('.png')]
@@ -156,15 +152,16 @@ def process_audio(f):
 
 if __name__=='__main__':
    
-    #file_list = [
-    #"5927.230919235004.txt",
-    #"5927.230909092958.txt",
-    #"6335.230909124958.txt",
-    #"6335.230909091958.txt"
-   #]
+    file_list = [
+  #  "5927.230919235004.txt"
+  #  "5927.230909092958.txt",
+    "6335.230909124958.txt"
+  #  "6335.230909091958.txt"
+   ]
 
-    #[clean(l) for l in file_list]
-    #[process_audio(f) for f in file_list]
+    [clean(l) for l in file_list]
+    [process_audio(f) for f in file_list]
+    sys.exit()
     split_data()
 
     
