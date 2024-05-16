@@ -82,7 +82,7 @@ def normalise_coords(row,x1,sr,S_dB):
         x2=1   
     y1, y2 = row['y1'], row['y2']
     
-    mel_frequencies = librosa.core.mel_frequencies(n_mels=60, fmin=0.0, fmax=sr/2)    
+    mel_frequencies = librosa.mel_frequencies(n_mels=60, fmin=0.0, fmax=sr/2)    
     y1_bin_index = np.argmin(np.abs(mel_frequencies - y1))
     y2_bin_index = np.argmin(np.abs(mel_frequencies - y2))
     
@@ -97,36 +97,43 @@ def save_spectrogram(audio_file, row, idx):
     else:
         save_as = max([int(filename.split('.')[0]) for filename in txt_files])+1
     print("Creating " + str(save_as))
-    y, sr = librosa.load(audio_file, sr=None)
-    x1 = math.floor(row['x1'])
-    x2=x1+1
+    
+    
+    y, sr = librosa.load(audio_file, sr=52137)
+    x1 = row['x1']
+    x2 = row['x2']
+    
+   # X = (np.abs(librosa.stft(y=y, hop_length=1024, win_length=2048, window='hann', center=True)))**2
+   # Spec = librosa.feature.melspectrogram(S=X, sr=sr, n_mels = 60, n_fft=2048, hop_length=1024)
+   # Xdb = np.flip(np.array(librosa.power_to_db(S=Spec, ref=np.max)),0)
+    
    
     start = int(x1*sr)
     end = int(x2*sr)
 
     segment = y[start:end]
-    S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=60)
-    S_dB = librosa.power_to_db(S, ref=np.max)
-    print(S_dB.shape)
-    librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')   
+    S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=60, n_fft=2048, hop_length=1024)
+    Xdb = librosa.power_to_db(S, ref=np.max)
+    print(Xdb.shape)
+    librosa.display.specshow(Xdb, sr=sr, x_axis='time', y_axis='mel')   
     #$plt.colorbar(format='%+2.0f dB')
     plt.axis('off')
-    print(normalise_coords(row, x1, sr, S_dB))
-    x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, S_dB))
+    print(normalise_coords(row, x1, sr, Xdb))
+    x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, Xdb))
     plt.plot()
     
     plt.savefig(f"data/spectrograms/{save_as}.png", bbox_inches = 'tight', pad_inches=0)
     with open(f'data/spectrograms/{save_as}.txt', 'w') as f:
-        f.write(f"0 {x} {y} {w} {h}")
+        f.write(f"0 {x} {y-1} {w} {h}")
 
-    sys.exit()
     
 def split_data():
     d = 'data/spectrograms/'
     files = [f for f in os.listdir(d) if f.endswith('.png')]
-    split = int(len(files)*0.75)
+    train_len, test_len, val_len = int(len(files)*0.7), int(len(files)*0.15),int(len(files)*0.15)
+    
     random.shuffle(files)
-    train_split, test_split = files[:split], files[split:]
+    train_split, test_split, val_split = files[:train_len], files[train_len:test_len], files[test_len:]
     
     for f in train_split:
         txt_file = os.path.splitext(f)[0] + '.txt'
@@ -137,6 +144,11 @@ def split_data():
         txt_file = os.path.splitext(f)[0] + '.txt'
         shutil.move(d+f, d+'test/'+f)
         shutil.move(d+txt_file, d+'test/'+txt_file)
+        
+    for f in val_split:
+        txt_file = os.path.splitext(f)[0] + '.txt'
+        shutil.move(d+f, d+'val/'+f)
+        shutil.move(d+txt_file, d+'val/'+txt_file)
     
     
     
@@ -154,14 +166,13 @@ if __name__=='__main__':
    
     file_list = [
   #  "5927.230919235004.txt"
-  #  "5927.230909092958.txt",
-    "6335.230909124958.txt"
-  #  "6335.230909091958.txt"
+   # "5927.230909092958.txt"
+    "6335.230909124958.txt",
+    "6335.230909091958.txt"
    ]
 
     [clean(l) for l in file_list]
     [process_audio(f) for f in file_list]
-    sys.exit()
     split_data()
 
     
