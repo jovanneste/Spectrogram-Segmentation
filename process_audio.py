@@ -124,16 +124,18 @@ def save_spectrogram(audio_file, row, idx):
     
     plt.savefig(f"data/spectrograms/{save_as}.png", bbox_inches = 'tight', pad_inches=0)
     with open(f'data/spectrograms/{save_as}.txt', 'w') as f:
-        f.write(f"0 {x} {y-1} {w} {h}")
+        f.write(f"0 {x} {1-y} {w} {h}")
 
     
 def split_data():
     d = 'data/spectrograms/'
     files = [f for f in os.listdir(d) if f.endswith('.png')]
-    train_len, test_len, val_len = int(len(files)*0.7), int(len(files)*0.15),int(len(files)*0.15)
-    
     random.shuffle(files)
-    train_split, test_split, val_split = files[:train_len], files[train_len:test_len], files[test_len:]
+    train_len = int(len(files)*0.85)
+    test_len = int(len(files)*0.05)
+    val_len = len(files) - train_len - test_len
+
+    train_split, test_split, val_split = files[:train_len], files[train_len:train_len+test_len], files[train_len+test_len:]
     
     for f in train_split:
         txt_file = os.path.splitext(f)[0] + '.txt'

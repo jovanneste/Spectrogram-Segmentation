@@ -38,5 +38,5 @@ def plot_bbox_on_image(image_path, bbox_text_path, output_image_path):
 
     cv2.imwrite(output_image_path, image)
 
-i=19
-plot_bbox_on_image(f'data/spectrograms/{i}.png', f'data/spectrograms/{i}.txt', 'annotated_image.png')
+i=60
+plot_bbox_on_image(f'data/spectrograms/test/{i}.png', f'data/spectrograms/test/{i}.txt', 'annotated_image.png')
