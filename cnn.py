@@ -6,6 +6,7 @@ from PIL import Image
 import os
 from PIL import Image, ImageDraw
 
+
 # Function to load and preprocess data
 def load_data(data_dir):
     images = []

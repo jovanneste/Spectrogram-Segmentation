@@ -14,9 +14,8 @@ def random_augmentation(input_dir, output_dir, num_augmentations=5):
         iaa.GammaContrast(gamma=(0.5, 2.0)),  # Random gamma correction
         iaa.MultiplyBrightness((0.5, 1.5)),  # Random brightness adjustment
         iaa.AddToHueAndSaturation((-20, 20)),  # Random color shifts
-    ], random_order=True)  # Apply augmentations in random order
+    ], random_order=True) 
 
-    # Loop through images in the input directory
     for filename in os.listdir(input_dir):
         if filename.endswith(('.png')):
             file_name = os.path.splitext(filename)[0]
@@ -33,9 +32,8 @@ def random_augmentation(input_dir, output_dir, num_augmentations=5):
                 save_as += 1
                 print(f"Augmented {filename} (iteration {i+1}) saved successfully as {save_as}.")
 
-# Example usage
-input_directory = "data/spectrograms/train/"
-output_directory = "data/spectrograms/train/"
-num_augmentations = 10
+input_directory = "data/spectrograms/test/"
+output_directory = "data/spectrograms/test/"
+num_augmentations = 3
 
 random_augmentation(input_directory, output_directory, num_augmentations)
