@@ -1,10 +1,10 @@
 import os
 import cv2
-import numpy as np
 import imgaug.augmenters as iaa
 import shutil
 
 def random_augmentation(input_dir, output_dir, num_augmentations=5):
+    print("Starting augmentation for ", input_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     txt_files = [f for f in os.listdir(input_dir) if f.endswith('.txt')]
@@ -32,8 +32,8 @@ def random_augmentation(input_dir, output_dir, num_augmentations=5):
                 save_as += 1
                 print(f"Augmented {filename} (iteration {i+1}) saved successfully as {save_as}.")
 
-input_directory = "../data/spectrograms/test/"
-output_directory = "../data/spectrograms/test/"
-num_augmentations = 2
 
-random_augmentation(input_directory, output_directory, num_augmentations)
+
+random_augmentation("../data/spectrograms/train/", "../data/spectrograms/train/", 5)
+random_augmentation("../data/spectrograms/test/", "../data/spectrograms/test/", 0)
+random_augmentation("../data/spectrograms/val/", "../data/spectrograms/val/", 2)

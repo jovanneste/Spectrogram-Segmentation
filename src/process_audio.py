@@ -11,6 +11,7 @@ import os
 import sys
 import random
 import shutil
+from tqdm import tqdm 
 
 def display(f):
     sample_rate, samples = wavfile.read(f)
@@ -38,7 +39,7 @@ def display(f):
 
 
 def clean(l):
-    labels_path = '/mnt/Data1/Acoustics/labels/REPMUS_2023/'+l
+    labels_path = '/mnt/Data1/Acoustics/labels/REPMUS_2021/2081/'+l
     output_file = '/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/labels/'+l
 
     with open(labels_path, 'r') as infile, open(output_file, 'w', newline='') as outfile:
@@ -60,20 +61,16 @@ def clean(l):
                 y1, y2 = float(y_parts[0]), float(y_parts[1])
                 
                 if 'whistle' in class_label.lower():
-                    print(class_label)
                     writer.writerow(['whistle', x1, x2, y1, y2])
                     
             except:
                 pass
 
 def coords_2_yolo(bbox):
-    print('yolo')
-    print(bbox)
     center_x = (bbox[0]+bbox[1])/2
     center_y = (bbox[2]+bbox[3])/2
     w = bbox[1]-bbox[0]
     h = bbox[3]-bbox[2]
-    print(center_x, center_y, w, h)
     return round(center_x,2), round(center_y,2), round(w,2), round(h,2)
 
 def normalise_coords(row,x1,sr,S_dB):
@@ -89,7 +86,6 @@ def normalise_coords(row,x1,sr,S_dB):
     return (round(row['x1']-x1,2),round(x2,2), round(y1_bin_index/60, 2), round(y2_bin_index/60, 2))
 
 def save_spectrogram(audio_file, row, idx): 
-    print(row)
     directory = '../data/spectrograms/'
     txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
 
@@ -97,9 +93,7 @@ def save_spectrogram(audio_file, row, idx):
         save_as = 1
     else:
         save_as = max([int(filename.split('.')[0]) for filename in txt_files])+1
-    print("Creating " + str(save_as))
-    
-    
+
     y, sr = librosa.load(audio_file, sr=52137)
     x1 = row['x1']
     x2 = row['x2']
@@ -115,11 +109,9 @@ def save_spectrogram(audio_file, row, idx):
     segment = y[start:end]
     S = librosa.feature.melspectrogram(y=segment, sr=sr, n_mels=60, n_fft=2048, hop_length=1024)
     Xdb = librosa.power_to_db(S, ref=np.max)
-    print(Xdb.shape)
     librosa.display.specshow(Xdb, sr=sr, x_axis='time', y_axis='mel')   
     #$plt.colorbar(format='%+2.0f dB')
     plt.axis('off')
-    print(normalise_coords(row, x1, sr, Xdb))
     x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, Xdb))
 
     
@@ -156,10 +148,10 @@ def split_data():
     
 def process_audio(f):
     print("NEW FILE -- ", f)
-    audio_file = ('/mnt/Data1/Acoustics/raw_data/REPMUS_2023/SoundTrap_data_wav/'+f)[:-3]+'wav'
+    audio_file = ('/mnt/Data1/Acoustics/raw_data/REPMUS_2021/PT07_1208492081/'+f)[:-3]+'wav'
     csv_file = '/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/labels/'+f
     df = pd.read_csv(csv_file)
-    for idx, row in df.iterrows():
+    for idx, row in tqdm(df.iterrows()):
         save_spectrogram(audio_file, row, idx)
 
 
@@ -220,8 +212,8 @@ if __name__=='__main__':
 ]
 
 
-    [clean(l) for l in file_list]
-    [process_audio(f) for f in file_list]
+    [clean(l) for l in fl]
+    [process_audio(f) for f in fl]
     split_data()
 
     
