@@ -32,8 +32,8 @@ def random_augmentation(input_dir, output_dir, num_augmentations=5):
                 save_as += 1
                 print(f"Augmented {filename} (iteration {i+1}) saved successfully as {save_as}.")
 
-input_directory = "data/spectrograms/test/"
-output_directory = "data/spectrograms/test/"
+input_directory = "../data/spectrograms/test/"
+output_directory = "../data/spectrograms/test/"
 num_augmentations = 2
 
 random_augmentation(input_directory, output_directory, num_augmentations)

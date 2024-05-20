@@ -90,7 +90,7 @@ def normalise_coords(row,x1,sr,S_dB):
 
 def save_spectrogram(audio_file, row, idx): 
     print(row)
-    directory = 'data/spectrograms/'
+    directory = '../data/spectrograms/'
     txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
 
     if not txt_files:
@@ -123,13 +123,13 @@ def save_spectrogram(audio_file, row, idx):
     x,y,w,h = coords_2_yolo(normalise_coords(row, x1, sr, Xdb))
 
     
-    plt.savefig(f"data/spectrograms/{save_as}.png", bbox_inches = 'tight', pad_inches=0)
-    with open(f'data/spectrograms/{save_as}.txt', 'w') as f:
+    plt.savefig(f"../data/spectrograms/{save_as}.png", bbox_inches = 'tight', pad_inches=0)
+    with open(f'../data/spectrograms/{save_as}.txt', 'w') as f:
         f.write(f"0 {x} {1-y} {w} {h}")
 
     
 def split_data():
-    d = 'data/spectrograms/'
+    d = '../data/spectrograms/'
     files = [f for f in os.listdir(d) if f.endswith('.png')]
     random.shuffle(files)
     train_len = int(len(files)*0.85)
