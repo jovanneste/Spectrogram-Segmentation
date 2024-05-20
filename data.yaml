@@ -1,4 +1,6 @@
-train: ~/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/spectrograms/
+train: ../drive/MyDrive/dataset_2/train
+val: ../drive/MyDrive/dataset_2/val
+test: ../drive/MyDrive/dataset_2/test
 
-nc=1
-names=['Whistle']
+nc: 1
+names: ['Whistle']
