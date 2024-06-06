@@ -60,6 +60,11 @@ def clean(l):
            
                 y1, y2 = float(y_parts[0]), float(y_parts[1])
                 
+                
+                if 'fv' in class_label.lower():
+                    writer.writerow([class_label.lower(), x1, x2, y1, y2])
+            
+                
                 if 'whistle' in class_label.lower():
                     writer.writerow(['whistle', x1, x2, y1, y2])
                     
@@ -85,7 +90,9 @@ def normalise_coords(row,x1,sr,S_dB):
     
     return (round(row['x1']-x1,2),round(x2,2), round(y1_bin_index/60, 2), round(y2_bin_index/60, 2))
 
-def save_spectrogram(audio_file, row, idx): 
+
+def save_spectrogram_whistle(audio_file, row, idx, df): 
+    print(row)
     directory = '../data/spectrograms/'
     txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
 
@@ -97,12 +104,6 @@ def save_spectrogram(audio_file, row, idx):
     y, sr = librosa.load(audio_file, sr=52137)
     x1 = row['x1']
     x2 = row['x2']
-    
-   # X = (np.abs(librosa.stft(y=y, hop_length=1024, win_length=2048, window='hann', center=True)))**2
-   # Spec = librosa.feature.melspectrogram(S=X, sr=sr, n_mels = 60, n_fft=2048, hop_length=1024)
-   # Xdb = np.flip(np.array(librosa.power_to_db(S=Spec, ref=np.max)),0)
-    
-   
     start = int(x1*sr)
     end = int(x2*sr)
 
@@ -116,9 +117,31 @@ def save_spectrogram(audio_file, row, idx):
 
     
     plt.savefig(f"../data/spectrograms/{save_as}.png", bbox_inches = 'tight', pad_inches=0)
+    
+    vessel = False
+    if 'fv' in df.iloc[0]['class'] and x1 > df.iloc[0]['x1'] and x2 < df.iloc[0]['x2']:
+        #this spectrogram also has a vessel
+        vessel = True
+        mel_frequencies = librosa.mel_frequencies(n_mels=60, fmin=0.0, fmax=sr/2) 
+        y1_bin_index = round(np.argmin(np.abs(mel_frequencies - df.iloc[0]['y1']))/60, 2)
+        y2_bin_index = round(np.argmin(np.abs(mel_frequencies - df.iloc[0]['y2']))/60, 2)
+        y_center_vessel = (y1_bin_index+y2_bin_index)/2
+        h_vessel = y2_bin_index-y1_bin_index
+        
+        vessel_class = df.iloc[0]['class']
+        if vessel_class=='lfv':
+            vessel_class=1
+        elif vessel_class=='mfv':
+            vessel_class=2
+        elif vessel_class=='hfv':
+            vessel_class=3
+
+      
     with open(f'../data/spectrograms/{save_as}.txt', 'w') as f:
         f.write(f"0 {x} {1-y} {w} {h}")
-
+        if vessel:
+            f.write("\n")
+            f.write(f"{vessel_class} {0.5} {1-y_center_vessel} {1} {h_vessel}")
     
 def split_data():
     d = '../data/spectrograms/'
@@ -152,7 +175,8 @@ def process_audio(f):
     csv_file = '/mnt/Data2/jvanneste/Spectrogram-Segmentation/data/labels/'+f
     df = pd.read_csv(csv_file)
     for idx, row in tqdm(df.iterrows()):
-        save_spectrogram(audio_file, row, idx)
+        if idx!=0:
+            save_spectrogram_whistle(audio_file, row, idx, df)
 
 
 
@@ -214,6 +238,6 @@ if __name__=='__main__':
 
     [clean(l) for l in fl]
     [process_audio(f) for f in fl]
-    split_data()
+   # split_data()
 
     

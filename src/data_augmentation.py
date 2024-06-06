@@ -11,9 +11,9 @@ def random_augmentation(input_dir, output_dir, num_augmentations=5):
     save_as = max([int(filename.split('.')[0]) for filename in txt_files])+1
     
     augmentation = iaa.Sequential([
-        iaa.GammaContrast(gamma=(0.5, 2.0)),  # Random gamma correction
-        iaa.MultiplyBrightness((0.5, 1.5)),  # Random brightness adjustment
-        iaa.AddToHueAndSaturation((-20, 20)),  # Random color shifts
+        iaa.GammaContrast(gamma=(0.5, 4.0)),  # Random gamma correction
+        iaa.MultiplyBrightness((0.5, 4)),  # Random brightness adjustment
+        iaa.AddToHueAndSaturation((-50, 50)),  # Random color shifts
     ], random_order=True) 
 
     for filename in os.listdir(input_dir):
